@@ -29,7 +29,7 @@ void loop() {
 * 모터의 속도조절 : 0~255단계로 조절가능(analogWrite)
 * throttle : 모터의 속도 조절값
 */
-#define THROTTLE_MAX 255
+/*#define THROTTLE_MAX 255
 #define THROTTLE_MIN 0
 #define THROTTLE_INI 5
 
@@ -115,13 +115,13 @@ void updateMotorSpeed(){
   analogWrite(motorB_pin, throttle);
   analogWrite(motorC_pin, throttle);
   analogWrite(motorD_pin, throttle);
-}
+}*/
 
 /* 명령전송으로 모터회전 (앱에서 제어에 따른 속도변화, 수평 회전 테스트)
 * 모터의 속도조절 : 0~255단계로 조절가능(analogWrite)
 * throttle : 모터의 속도 조절값
 */
-/*#define THROTTLE_MAX 255
+#define THROTTLE_MAX 255
 #define THROTTLE_MIN 0
 #define THROTTLE_INI 5
 
@@ -204,8 +204,8 @@ void checkMspPacket(){
 ///////////////////////////
 void updateMotorSpeed(){
   //어느 한 프롭의 속도를 움직이지 않으면 회전한다.//
-  analogWrite(motorA_pin, THROTTLE_MIN);
-  analogWrite(motorB_pin, throttle);
-  analogWrite(motorC_pin, THROTTLE_MIN);
-  analogWrite(motorD_pin, throttle);
-}*/
+  analogWrite(motorA_pin, throttle);
+  analogWrite(motorB_pin, THROTTLE_MIN);
+  analogWrite(motorC_pin, throttle);
+  analogWrite(motorD_pin, THROTTLE_MIN);
+}
