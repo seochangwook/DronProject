@@ -1,5 +1,8 @@
 #include<Wire.h>
 
+#define THROTTLE_MAX 255
+#define THROTTLE_MIN 0
+
 //MSP프로토콜 설정//
 enum{
   HEAD1,
@@ -74,15 +77,22 @@ float base_yaw_target_angle;
 float throttle = 0;
 float motorA_speed, motorB_speed, motorC_speed, motorD_speed;
 
+//드론 프롭이 연결되어 있는 핀 정보//
+int motorA_pin = 6;
+int motorB_pin = 10;
+int motorC_pin = 9;
+int motorD_pin = 5;
+
 void setup() {
   // put your setup code here, to run once:
   initMPU6050(); //MPU6050초기화//
-  Serial.begin(115200);
+  //Serial.begin(115200);
   Serial1.begin(115200); //HM-10(블루투스)로 부터 데이터를 받기 위해서 선언//
   calibAccelGyro(); //가속도 자이로 센서의 초기 평균값을 구한다.//
   initDT(); //시간 간격 초기화//
   //accelNoiseTest();
   initYPR(); //Roll, Pitch, Yaw의 초기각도 값을 설정(평균을 구해 초기 각도로 설정, 호버링을 위한 목표 각도로 사용)//
+  initMotorSpeed(); //모터의 속도를 초기화//
 }
 ///////////////////////
 void initMPU6050(){
@@ -153,6 +163,17 @@ void initYPR(){
   pitch_target_angle = base_pitch_target_angle;
   yaw_target_angle = base_yaw_target_angle;
 }
+///////////////////////
+void initMotorSpeed(){
+  analogWrite(motorA_pin, THROTTLE_MIN);
+  delay(1000);
+  analogWrite(motorB_pin, THROTTLE_MIN);
+  delay(1000);
+  analogWrite(motorC_pin, THROTTLE_MIN);
+  delay(1000);
+  analogWrite(motorD_pin, THROTTLE_MIN);
+  delay(1000);
+}
 ////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:
@@ -166,13 +187,14 @@ void loop() {
   calcYPRtoStdPID(); //calcFilteredYPR함수를 통해 얻은 Yaw, Pitch, Roll각을 이용해 표준 PID출력값을 구한다.//
   calcMotorSpeed(); //PID출력값을 구한것을 기준으로 모터의 속도를 계산한다.//
   checkMspPacket();
+  updateMotorSpeed();
   
-  static int cnt;
+  /*static int cnt;
   cnt++;
 
   if(cnt%2 == 0){
     SendDataToProcessing(); //프로세싱으로 Roll, Pitch, Yaw값을 전송//
-  }
+  }*/
 }
 ///////////////////////
 void calcDT(){
@@ -285,10 +307,10 @@ void calcYPRtoStdPID(){
 }
 ///////////////////////
 void calcMotorSpeed(){
-  motorA_speed = throttle + yaw_output + roll_output + pitch_output;
-  motorB_speed = throttle - yaw_output - roll_output + pitch_output;
-  motorC_speed = throttle + yaw_output - roll_output - pitch_output;
-  motorD_speed = throttle - yaw_output + roll_output - pitch_output;
+  motorA_speed = (throttle == 0) ? 0 : throttle + yaw_output + roll_output + pitch_output;
+  motorB_speed = (throttle == 0) ? 0 : throttle - yaw_output - roll_output + pitch_output;
+  motorC_speed = (throttle == 0) ? 0 : throttle + yaw_output - roll_output - pitch_output;
+  motorD_speed = (throttle == 0) ? 0 : throttle - yaw_output + roll_output - pitch_output;
 
   //아날로그의 PWM값은 0~255이므로 각 경계값마다의 보정작업//
   if(motorA_speed < 0){
@@ -358,7 +380,7 @@ void readAccelGyro(){
   delay(5);
 }*/
 ///////////////////////
-void SendDataToProcessing(){
+/*void SendDataToProcessing(){
   Serial.print(F("DEL:"));
   Serial.print(dt, DEC);
   Serial.print(F("#RPY:"));
@@ -382,7 +404,7 @@ void SendDataToProcessing(){
   Serial.print(F("#D:"));
   Serial.print(motorD_speed);
   Serial.print(F("\n"));
-}
+}*/
 /////////////////////////
 void checkMspPacket(){
   static uint32_t cnt;
@@ -406,4 +428,12 @@ void checkMspPacket(){
       }
     }
   }
+}
+///////////////////////////
+void updateMotorSpeed(){
+  //어느 한 프롭의 속도를 움직이지 않으면 회전한다.//
+  analogWrite(motorA_pin, motorA_speed);
+  analogWrite(motorB_pin, motorB_speed);
+  analogWrite(motorC_pin, motorC_speed);
+  analogWrite(motorD_pin, motorD_speed);
 }
