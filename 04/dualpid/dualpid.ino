@@ -425,10 +425,12 @@ void calcYPRtoDualPID(){
 }
 ///////////////////////
 void calcMotorSpeed(){
-  motorA_speed = (throttle == 0) ? 0 : throttle + yaw_output + roll_output + pitch_output;
-  motorB_speed = (throttle == 0) ? 0 : throttle - yaw_output - roll_output + pitch_output;
-  motorC_speed = (throttle == 0) ? 0 : throttle + yaw_output - roll_output - pitch_output;
-  motorD_speed = (throttle == 0) ? 0 : throttle - yaw_output + roll_output - pitch_output;
+
+  //모터 속도 보정(호버링)//
+  motorA_speed = (throttle == 0) ? 0 : throttle + yaw_output + roll_output + pitch_output + 12;
+  motorB_speed = (throttle == 0) ? 0 : throttle - yaw_output - roll_output + pitch_output + 12;
+  motorC_speed = (throttle == 0) ? 0 : throttle + yaw_output - roll_output - pitch_output + 20;
+  motorD_speed = (throttle == 0) ? 0 : throttle - yaw_output + roll_output - pitch_output + 20;
 
   //아날로그의 PWM값은 0~255이므로 각 경계값마다의 보정작업//
   if(motorA_speed < 0){
