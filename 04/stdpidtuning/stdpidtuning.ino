@@ -25,7 +25,6 @@ int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ; //가속도 센서값, 자이로 센�
 
 //세가지 형태의 Roll, Pitch, Yaw 각도를 저장하기 위한 변수//
 float accel_angle_x, accel_angle_y, accel_angle_z;
-//float gyro_angle_x, gyro_angle_y, gyro_angle_z;
 float filtered_angle_x, filtered_angle_y, filtered_angle_z;
 
 //메시지 출력을 위한 알려주는 변수. extern으로 선언 시 선언된 변수가 어딘가에 있다는 것을 아두이노 소프트웨어에 알릴 때 사용//
@@ -86,12 +85,12 @@ int motorD_pin = 5;
 
 void setup() {
   // put your setup code here, to run once:
-  initMPU6050(); //MPU6050초기화//
   Serial.begin(115200);
   Serial1.begin(115200); //HM-10(블루투스)로 부터 데이터를 받기 위해서 선언//
+  
+  initMPU6050(); //MPU6050초기화//
   calibAccelGyro(); //가속도 자이로 센서의 초기 평균값을 구한다.//
   initDT(); //시간 간격 초기화//
-  //accelNoiseTest();
   initYPR(); //Roll, Pitch, Yaw의 초기각도 값을 설정(평균을 구해 초기 각도로 설정, 호버링을 위한 목표 각도로 사용)//
   initMotorSpeed(); //모터의 속도를 초기화//
 }
@@ -179,6 +178,7 @@ void initMotorSpeed(){
 void loop() {
   // put your main code here, to run repeatedly:
   readAccelGyro();
+  
   calcDT();
   
   calcAccelYPR(); //가속도 센서 Roll, Pitch, Yaw의 각도를 구하는 루틴//
@@ -189,13 +189,6 @@ void loop() {
   calcMotorSpeed(); //PID출력값을 구한것을 기준으로 모터의 속도를 계산한다.//
   checkMspPacket();
   updateMotorSpeed();
-  
-  /*static int cnt;
-  cnt++;
-
-  if(cnt%2 == 0){
-    SendDataToProcessing(); //프로세싱으로 Roll, Pitch, Yaw값을 전송//
-  }*/
 }
 ///////////////////////
 void calcDT(){
@@ -230,10 +223,6 @@ void calcGyroYPR(){
   gyro_x = (GyX - baseGyX) / GYROXYZ_TO_DEGREES_PER_SEC;
   gyro_y = (GyY - baseGyY) / GYROXYZ_TO_DEGREES_PER_SEC;
   gyro_z = (GyZ - baseGyZ) / GYROXYZ_TO_DEGREES_PER_SEC;
-
-  //gyro_angle_x += gyro_x * dt;
-  //gyro_angle_y += gyro_y * dt;
-  //gyro_angle_z += gyro_z * dt;
 }
 /////////////////////////
 void calcFilteredYPR(){
@@ -332,12 +321,6 @@ void calcMotorSpeed(){
     motorD_speed = 255;
   }
 }
-/*void accelNoiseTest(){
-  analogWrite(6, 40);
-  analogWrite(10, 40);
-  analogWrite(9,40);
-  analogWrite(5, 40);
-}*/
 ///////////////////////
 void readAccelGyro(){
   Wire.beginTransmission(MPU_addr);
@@ -354,58 +337,6 @@ void readAccelGyro(){
   GyY = Wire.read() << 8|Wire.read();
   GyZ = Wire.read() << 8|Wire.read();
 }
-////////////////////////
-/*void SendDataToProcessing(){
-  Serial.print(F("DEL:"));
-  Serial.print(dt, DEC);
-  Serial.print(F("#ACC:"));
-  Serial.print(accel_angle_x, 2);
-  Serial.print(F(","));
-  Serial.print(accel_angle_y, 2);
-  Serial.print(F(","));
-  Serial.print(accel_angle_z, 2);
-  Serial.print(F("#GYR:"));
-  Serial.print(gyro_angle_x, 2);
-  Serial.print(F(","));
-  Serial.print(gyro_angle_y, 2);
-  Serial.print(F(","));
-  Serial.print(gyro_angle_z, 2);
-  Serial.print(F("#FIL:"));
-  Serial.print(filtered_angle_x);
-  Serial.print(F(","));
-  Serial.print(filtered_angle_y);
-  Serial.print(F(","));
-  Serial.print(filtered_angle_z);
-  Serial.print(F("\n"));
-
-  delay(5);
-}*/
-///////////////////////
-/*void SendDataToProcessing(){
-  Serial.print(F("DEL:"));
-  Serial.print(dt, DEC);
-  Serial.print(F("#RPY:"));
-  Serial.print(filtered_angle_y, 2);
-  Serial.print(F(","));
-  Serial.print(filtered_angle_x, 2);
-  Serial.print(F(","));
-  Serial.print(filtered_angle_z, 2);
-  Serial.print(F("#PID:"));
-  Serial.print(roll_output, 2);
-  Serial.print(F(","));
-  Serial.print(pitch_output, 2);
-  Serial.print(F(","));
-  Serial.print(yaw_output, 2);
-  Serial.print(F("#A:"));
-  Serial.print(motorA_speed);
-  Serial.print(F("#B:"));
-  Serial.print(motorB_speed);
-  Serial.print(F("#C:"));
-  Serial.print(motorC_speed);
-  Serial.print(F("#D:"));
-  Serial.print(motorD_speed);
-  Serial.print(F("\n"));
-}*/
 /////////////////////////
 void checkMspPacket(){
   static uint32_t cnt;
@@ -425,20 +356,6 @@ void checkMspPacket(){
       if(cnt == CRC){
         if(mspPacket[CMD] == 150){
           throttle = mspPacket[THROTTLE]; //모터의 속도값을 가져온다//
-
-          /*float roll_ku = mspPacket[ROLL];
-          roll_ku -= 125;
-
-          if(roll_ku < 0){
-            roll_ku = 0;
-          }
-
-          roll_ku /= 25;
-          roll_kp = roll_ku;
-
-          Serial.print(throttle, 2);
-          Serial.print('\t');
-          Serial.println(roll_kp, 2);*/
         }
       }
     }
