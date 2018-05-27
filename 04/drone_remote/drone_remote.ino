@@ -286,14 +286,14 @@ void dualPID(float target_angle,
   angle_error = target_angle - angle_in;
 
   stabilize_pterm = stabilize_kp * angle_error;
-  stabilize_iterm = stabilize_ki * angle_error * dt; //안정화 적분항//
+  stabilize_iterm += stabilize_ki * angle_error * dt; //안정화 적분항//
 
   desired_rate = stabilize_pterm;
 
   rate_error = desired_rate - rate_in;
 
   rate_pterm = rate_kp * rate_error; //각속도 비례항//
-  rate_iterm = rate_ki * rate_error * dt; //각속도 적분항//
+  rate_iterm += rate_ki * rate_error * dt; //각속도 적분항//
 
   output = rate_pterm + rate_iterm + stabilize_iterm; //최종 출력 : 각속도 비례항 + 각속도 적분항 + 안정화 적분항//
 }
@@ -348,10 +348,10 @@ void calcYPRtoDualPID(){
 void calcMotorSpeed(){
 
   //모터 속도 보정(호버링)//
-  motorA_speed = (throttle == 0) ? 0 : throttle + yaw_output + roll_output + pitch_output + 12;
-  motorB_speed = (throttle == 0) ? 0 : throttle - yaw_output - roll_output + pitch_output + 12;
-  motorC_speed = (throttle == 0) ? 0 : throttle + yaw_output - roll_output - pitch_output + 20;
-  motorD_speed = (throttle == 0) ? 0 : throttle - yaw_output + roll_output - pitch_output + 20;
+  motorA_speed = (throttle == 0) ? 0 : throttle + yaw_output + roll_output + pitch_output + 20;
+  motorB_speed = (throttle == 0) ? 0 : throttle - yaw_output - roll_output + pitch_output + 20;
+  motorC_speed = (throttle == 0) ? 0 : throttle + yaw_output - roll_output - pitch_output + 45;
+  motorD_speed = (throttle == 0) ? 0 : throttle - yaw_output + roll_output - pitch_output + 45;
 
   //아날로그의 PWM값은 0~255이므로 각 경계값마다의 보정작업//
   if(motorA_speed < 0){
